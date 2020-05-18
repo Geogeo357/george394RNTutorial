@@ -1,32 +1,20 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useState, useEffect, useRef } from 'react';
 import { AppRegistry, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Camera } from 'expo-camera';
 import * as Permissions from 'expo-permissions';
 import { FontAwesome, Ionicons,MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
-class App extends React.Component {
-  constructor(props){
-    super(props);
-    this.state = {
-      hasPermission: null,
-      type: Camera.Constants.Type.back,
-    }
-  }
-  
-  state = {
-    hasPermission: null,
-    type: Camera.Constants.Type.back,
-  }
+const App = () => {
+  const [hasPermission, setHasPermission] = useState(false);
+  let cameraRef = useRef(null)
+
+  const [type, setType] = useState(Camera.Constants.Type.back);
 
   handleCameraType=()=>{
-    const { cameraType } = this.state
-
-    this.setState({cameraType:
-      cameraType === Camera.Constants.Type.back
+    setType(type === Camera.Constants.Type.back
       ? Camera.Constants.Type.front
-      : Camera.Constants.Type.back
-    })
+      : Camera.Constants.Type.back);
   }
 
   pickImage = async () => {
@@ -35,9 +23,10 @@ class App extends React.Component {
     });
   }
 
-  async componentDidMount() {
-    this.getPermissionAsync()
-  }  
+  useEffect(() => {    
+      this.getPermissionAsync();
+  }, []);
+
   getPermissionAsync = async () => {
       // Camera roll Permission 
       if (Platform.OS === 'ios') {
@@ -48,16 +37,14 @@ class App extends React.Component {
       }
       // Camera Permission
       const { status } = await Permissions.askAsync(Permissions.CAMERA);
-      this.setState({ hasPermission: status === 'granted' });
+      setHasPermission(status === 'granted')
     }
 
   takePicture = async () => {
-    if (this.camera) {
-      let photo = await this.camera.takePictureAsync();
+    if (cameraRef) {
+      let photo = await cameraRef.current.takePictureAsync();
     }
   }
-  render(){
-    const { hasPermission } = this.state
     if (hasPermission === null) {
       return <View />;
     } else if (hasPermission === false) {
@@ -65,9 +52,7 @@ class App extends React.Component {
     } else {
       return (
           <View style={{ flex: 1 }}>
-            <Camera style={{ flex: 1 }} type={this.state.cameraType}   ref={ref => {
-    this.camera = ref;
-  }}>
+            <Camera style={{ flex: 1 }} type={type}   ref={cameraRef}>
             <View style={{flex:1, flexDirection:"row",justifyContent:"space-between",margin:20}}>
   <TouchableOpacity
     style={{
@@ -110,7 +95,7 @@ class App extends React.Component {
         </View>
       );
     }
-  }
+
 }
 
 export default App
